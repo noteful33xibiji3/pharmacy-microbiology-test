@@ -9,11 +9,18 @@ st.set_page_config(page_title="抗生素學習與測驗系統", page_icon="💊"
 st.title("🦠 藥理/微免 學習與測驗系統")
 st.markdown("請上傳題庫，並選擇你要進行的學習模式！")
 
-# 建立檔案上傳區塊
+# 1. 建立檔案上傳區塊 (保留原本的功能)
 uploaded_file = st.file_uploader("📂 上傳 CSV 題庫 (需包含：菌種, 首選藥, 替代藥, 分類)", type=['csv'])
 
+# 2. 判斷要讀取哪裡的資料
+df = None
 if uploaded_file is not None:
+    # 如果你有手動丟檔案上去，優先用手動的
     df = pd.read_csv(uploaded_file)
+elif os.path.exists("bacteria_test.csv"):
+    # 如果沒丟檔案，但資料夾裡有 bacteria_test.csv，就自動讀取它
+    df = pd.read_csv("bacteria_test.csv")
+    st.info("ℹ️ 已自動載入預設題庫：bacteria_test.csv")
     
     # 清理空值，避免程式報錯
     df['首選藥'] = df['首選藥'].fillna('無')
