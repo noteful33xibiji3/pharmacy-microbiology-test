@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 import re  # 用來處理文字遮罩的套件
+import os
 
 # 設定網頁標題
 st.set_page_config(page_title="抗生素學習與測驗系統", page_icon="💊")
