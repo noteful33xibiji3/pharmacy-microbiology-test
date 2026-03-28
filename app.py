@@ -224,12 +224,13 @@ if df is not None:
             st.warning(f"🛡️ **替代藥:** {row['替代藥']}")
             
     # ==========================================
-    # 模式四：反向查詢 (給藥物 ➔ 猜細菌)
+    # 模式四：反向查詢 (給藥物 ➔ 猜細菌) - 🌟 升級搜替代藥版
     # ==========================================
     elif mode == "🔍 反向查詢 (給藥物 ➔ 猜細菌)":
         st.header("🔍 反向查詢")
         
-        all_drugs_raw = df['首選藥'].dropna().tolist()
+        # 🌟 升級 1：把首選藥和替代藥全部抓出來合併，製作更完整的下拉選單
+        all_drugs_raw = df['首選藥'].dropna().tolist() + df['替代藥'].dropna().tolist()
         individual_drugs = []
         for drug_str in all_drugs_raw:
             individual_drugs.extend([d.strip() for d in re.split(r'[,+/]', str(drug_str)) if d.strip() != "無"])
@@ -243,18 +244,33 @@ if df is not None:
             st.session_state.rev_show_ans = False
             st.session_state.last_rev_drug = selected_drug
 
-        st.subheader(f"請問哪些細菌的首選藥包含 **{selected_drug}**？")
+        st.subheader(f"請問哪些細菌的用藥 (包含首選與替代) 包含 **{selected_drug}**？")
         st.text_area("✍️ 請寫下你聯想到的細菌", key="rev_input")
             
         if st.button("👁️ 看解答 / 對答案"): st.session_state.rev_show_ans = True
 
         if st.session_state.rev_show_ans:
-            st.markdown(f"### 💡 首選藥包含 **{selected_drug}** 的細菌有：")
-            matching_rows = df[df['首選藥'].str.contains(re.escape(selected_drug), na=False)]
+            st.markdown(f"### 💡 用藥包含 **{selected_drug}** 的細菌有：")
+            
+            # 🌟 升級 2：同時搜尋首選藥和替代藥的欄位
+            mask_doc = df['首選藥'].str.contains(re.escape(selected_drug), na=False)
+            mask_alt = df['替代藥'].str.contains(re.escape(selected_drug), na=False)
+            matching_rows = df[mask_doc | mask_alt]
+            
             if not matching_rows.empty:
                 for _, row in matching_rows.iterrows():
-                    st.success(f"🦠 **{row['菌種']}**\n\n(完整用藥：{row['首選藥']} | 提示：{row['分類']})")
-            else: st.write("目前題庫中沒有對應的資料。")
+                    # 判斷這顆藥是這隻菌的首選還是替代，讓顯示更清楚
+                    is_doc = selected_drug in str(row['首選藥'])
+                    is_alt = selected_drug in str(row['替代藥'])
+                    
+                    role_text = []
+                    if is_doc: role_text.append("🏆 首選")
+                    if is_alt: role_text.append("🛡️ 替代")
+                    role_display = " & ".join(role_text)
+                    
+                    st.success(f"🦠 **{row['菌種']}** 【{role_display}】\n\n(首選：{row['首選藥']} | 替代：{row['替代藥']} | 提示：{row['分類']})")
+            else: 
+                st.write("目前題庫中沒有對應的資料。")
 
     # ==========================================
     # 模式五：全真模擬考 (Mock Exam) - 🌟 升級選擇/拼寫雙模式！
