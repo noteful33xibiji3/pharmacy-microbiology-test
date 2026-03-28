@@ -305,4 +305,4 @@ if df is not None:
                 
                 if st.button("🔄 再挑戰一次"):
                     st.session_state.mock_active = False
-                    st.rerun()rerun()
+                    st.rerun()
