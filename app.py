@@ -55,31 +55,82 @@ if df is not None:
             return "無"
         return re.sub(r'[a-zA-Z]', '*', str(text))
 
-    # ==========================================
-    # 模式一：學習卡 (Flashcards)
+  # ==========================================
+    # 模式一：學習卡 (Flashcards) - 🌟 Quizlet 專業版
     # ==========================================
     if mode == "📖 學習卡 (Flashcards)":
         st.header("📖 學習卡模式")
+        st.caption("就像 Quizlet 一樣！你可以連續翻頁、洗牌，還能設定正反面。")
         
-        selected_bac = st.selectbox("🔍 請選擇要學習的細菌：", bacteria_list)
-        
-        if 'flashcard_flip' not in st.session_state: st.session_state.flashcard_flip = False
-        if 'last_flash_bac' not in st.session_state: st.session_state.last_flash_bac = selected_bac
-            
-        if selected_bac != st.session_state.last_flash_bac:
-            st.session_state.flashcard_flip = False
-            st.session_state.last_flash_bac = selected_bac
+        # Quizlet 核心功能：卡片設定
+        col_set1, col_set2 = st.columns(2)
+        with col_set1:
+            fc_front = st.radio("🔄 卡片正面顯示：", ["🦠 菌種 (背藥物)", "💊 藥物 (背菌種)"])
+        with col_set2:
+            fc_order_type = st.radio("🔀 出牌順序：", ["循序播放", "隨機打亂"])
 
-        row = df[df['菌種'] == selected_bac].iloc[0]
-        st.info(f"### 🦠 {selected_bac}")
-        st.caption(f"💡 分類提示：{row['分類']}")
-        
-        if st.button("🔄 翻轉卡片看藥物"): st.session_state.flashcard_flip = True
-            
-        if st.session_state.flashcard_flip:
-            st.success(f"**🏆 首選藥:** {row['首選藥']}")
-            st.warning(f"**🛡️ 替代藥:** {row['替代藥']}")
+        # 初始化學習卡狀態
+        if 'fc_order' not in st.session_state: st.session_state.fc_order = bacteria_list.copy()
+        if 'fc_index' not in st.session_state: st.session_state.fc_index = 0
+        if 'fc_flipped' not in st.session_state: st.session_state.fc_flipped = False
+        if 'last_fc_order_type' not in st.session_state: st.session_state.last_fc_order_type = "循序播放"
 
+        # 如果切換了洗牌/循序，就重新整理牌堆
+        if fc_order_type != st.session_state.last_fc_order_type:
+            st.session_state.last_fc_order_type = fc_order_type
+            st.session_state.fc_index = 0
+            st.session_state.fc_flipped = False
+            if fc_order_type == "隨機打亂":
+                shuffled = bacteria_list.copy()
+                random.shuffle(shuffled)
+                st.session_state.fc_order = shuffled
+            else:
+                st.session_state.fc_order = bacteria_list.copy()
+
+        total_cards = len(st.session_state.fc_order)
+        curr_fc_bac = st.session_state.fc_order[st.session_state.fc_index]
+        row = df[df['菌種'] == curr_fc_bac].iloc[0]
+
+        st.write(f"**📚 目前進度： 第 {st.session_state.fc_index + 1} 張 / 共 {total_cards} 張**")
+
+        # 決定卡片正反面要顯示的文字
+        if fc_front == "🦠 菌種 (背藥物)":
+            front_text = f"### 🦠 {curr_fc_bac}\n\n*(提示：{row['分類']})*"
+            back_text = f"### 🏆 **首選藥:** {row['首選藥']}\n\n#### 🛡️ **替代藥:** {row['替代藥']}"
+        else:
+            front_text = f"### 💊 {row['首選藥']}\n\n*(這是誰的首選藥？)*"
+            back_text = f"### 🦠 **{curr_fc_bac}**\n\n*(提示：{row['分類']})*\n\n🛡️ 替代藥: {row['替代藥']}"
+
+        # 顯示卡片 UI
+        st.markdown("---")
+        if not st.session_state.fc_flipped:
+            st.info(front_text)  # 正面用藍色框
+        else:
+            st.success(back_text) # 背面用綠色框
+        st.markdown("---")
+
+        # 底部按鈕區：上一張、翻轉、下一張
+        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+        with col_btn1:
+            if st.button("⬅️ 上一張", use_container_width=True):
+                if st.session_state.fc_index > 0:
+                    st.session_state.fc_index -= 1
+                    st.session_state.fc_flipped = False
+                    st.rerun()
+                else:
+                    st.toast("這已經是第一張囉！", icon="⚠️")
+        with col_btn2:
+            if st.button("🔄 翻轉卡片", use_container_width=True, type="primary"):
+                st.session_state.fc_flipped = not st.session_state.fc_flipped
+                st.rerun()
+        with col_btn3:
+            if st.button("下一張 ➡️", use_container_width=True):
+                if st.session_state.fc_index < total_cards - 1:
+                    st.session_state.fc_index += 1
+                    st.session_state.fc_flipped = False
+                    st.rerun()
+                else:
+                    st.toast("🎉 恭喜！卡片已經全部複習完畢！", icon="🎉")
     # ==========================================
     # 模式二：選擇題 (Multiple Choice)
     # ==========================================
