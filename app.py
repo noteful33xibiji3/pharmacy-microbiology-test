@@ -22,25 +22,25 @@ elif os.path.exists("bacteria_test.csv"):
     st.info("ℹ️ 已自動載入預設題庫：bacteria_test.csv")
 
 if df is not None:
-    # 清理空值，避免程式報錯
+    # 清理空值與換行符號，避免排版跑掉或程式報錯
+    df['菌種'] = df['菌種'].astype(str).str.replace('\n', ' ') # 🌟 這一行能解決大標題斷掉的問題
     df['首選藥'] = df['首選藥'].fillna('無')
     df['替代藥'] = df['替代藥'].fillna('無')
-    
+
     if '分類' not in df.columns:
         df['分類'] = '無分類資訊'
     else:
         df['分類'] = df['分類'].fillna('無分類資訊')
-        
-    # 🌟 新增了第五個模式：模擬考
+
     mode = st.radio("🔄 請選擇功能：", [
         "📖 學習卡 (Flashcards)", 
         "🎯 選擇題測驗 (Multiple Choice)", 
         "✍️ 單題拼寫 (Typing)",
         "🔍 反向查詢 (給藥物 ➔ 猜細菌)",
-        "🏆 全真模擬考 (Mock Exam)" 
+        "🏆 全真模擬考 (Mock Exam)",
+        "📊 查看完整題庫 (Data Table)" # 🌟 新增第六個模式
     ])
     st.divider()
-
     bacteria_list = df['菌種'].tolist()
     
     unique_drugs = df['首選藥'].unique().tolist()
@@ -357,3 +357,12 @@ if df is not None:
                 if st.button("🔄 再挑戰一次"):
                     st.session_state.mock_active = False
                     st.rerun()
+    # ==========================================
+    # 模式六：查看完整題庫 (Data Table)
+    # ==========================================
+    elif mode == "📊 查看完整題庫 (Data Table)":
+        st.header("📊 完整題庫一覽")
+        st.caption("你可以在這裡總覽所有的細菌與用藥，點擊欄位標題可以進行排序。")
+
+        # 顯示互動式資料表，隱藏最左邊的數字索引，並讓表格自動撐滿寬度
+        st.dataframe(df, use_container_width=True, hide_index=True)
