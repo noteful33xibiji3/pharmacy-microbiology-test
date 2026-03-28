@@ -1,0 +1,69 @@
+﻿菌種,首選藥,替代藥,分類
+"Streptococcus pyogenes
+(化膿性鏈球菌)
+group A streptococci
+(A 群鏈球菌)",Penicillin,"Macrolide, Cephalosporin",好氧菌 - 革蘭氏陽性球菌
+"Streptococcus pneumoniae
+(肺炎雙球菌)",Penicillin,"Macrolide, Cephalosporin, Bactrim, Doxycycline",好氧菌 - 革蘭氏陽性球菌
+"Enterococcus faecalis
+(屬糞腸球菌)",Ampicillin±GM,"Vancomycin+GM, Teicoplanin+GM",好氧菌 - 革蘭氏陽性球菌
+"Enterococcus faecium
+(腸球菌)",Vancomycin±GM,"Dalfopristin, Quinopristin, Linezolid",好氧菌 - 革蘭氏陽性球菌
+"Staphylococcus aureus
+(金黃色葡萄球菌)",Methicillin,"Cephalexin, Vancomycin, Clindamycin, Bactrim",好氧菌 - 革蘭氏陽性球菌
+"Methicillin-resistant(MRSA)
+Staphylococcus aureus",Vancomycin,"Linezolid, Daptomycin",好氧菌 - 革蘭氏陽性球菌
+"Staphylococcus epidermidis
+(上皮葡萄球菌)",Methicillin,"Cefazolin, Vanomycin, Clindamycin",好氧菌 - 革蘭氏陽性球菌
+VISA and VRSA,"Quinupristin, Dalfopristin",,好氧菌 - 革蘭氏陽性球菌
+"Moraxella catarrhalis
+(莫拉克氏粘膜菌)",Bactrim,"Amoxicillin-clavulanic acid, Erythromycin, Doxycycline, 第2、3 代Cephalosporin",好氧菌 - 革蘭氏陰性球菌
+"Neisseria gonorrhoeae
+(淋病奈瑟式雙球菌)","Quinolone, Doxycycline, Cefixime(第3 代)",Ceftriaxone(第3 代),好氧菌 - 革蘭氏陰性球菌
+"Neisseria meningitidesmeningitides
+(腦膜炎雙球菌)",Penicillin,第3 代Cephalosporin,好氧菌 - 革蘭氏陰性球菌
+Diphtheroids(類白喉菌),Penicillin,Cephalosporin,好氧菌 - 革蘭氏陽性桿菌
+"Corynebacterium jeikeium
+(JK 群棒狀桿菌)",Vancomycin,"Erythromycin, Quinolone",好氧菌 - 革蘭氏陽性桿菌
+"Listeria monocytogenes
+(單核球增多李斯特菌)",Ampicillin±GM,Bactrim,好氧菌 - 革蘭氏陽性桿菌
+"Mycobacterium tuberculosis
+(結核分枝桿菌)","Isoniazid(INH), Rifampin(RIF), Ethambutol(EMB), Pyrazinamide(PZA)",,好氧菌 - 革蘭氏陽性桿菌
+"Campylobacter jejuni
+(空腸曲狀桿菌)","Azithromycin, Erythromycin",,好氧菌 - 革蘭氏陰性桿菌
+Enterobacter (腸桿菌),Bactrim,"Quinolone, Imipenem, Gentamicin",好氧菌 - 革蘭氏陰性桿菌
+Escherichia coli(大腸桿菌),第3 代Cephalosporin,"第1 或2 代Cephalosporin, Gentamicin",好氧菌 - 革蘭氏陰性桿菌
+"Haemophilis influenza
+(流行性嗜血桿菌)","第3 代cCephalosporin
+(Ceftriaxone)","第2 代cephalosporin, Bactrim,
+β-lactamase Inhibitor",好氧菌 - 革蘭氏陰性桿菌
+Helicobacter pylori(幽門螺旋桿菌),Amoxicillin+Clarithromycin+Omeprazole(PPI),Tetracycline+Metronidazole+Bismuth subsalicylate,好氧菌 - 革蘭氏陰性桿菌
+Klebsiella pneumonia(肺炎桿菌),第3 代cephalosporin,"第1 或2 代Cephalosporin, Bactrium",好氧菌 - 革蘭氏陰性桿菌
+Legionella (退伍軍人肺炎桿菌),Azithromycin +Rifampin,"Fluororquinolone(Levofloxacin), Doxycycline",好氧菌 - 革蘭氏陰性桿菌
+"Pseudomonas aeruginosa
+(綠膿桿菌)","Ceftriaxone/Cefepime+
+Piperacillin",Quinolone/imipenem+aminoglycoside,好氧菌 - 革蘭氏陰性桿菌
+Salmonella typhi(傷寒桿菌),"Quinolone, Ciprofloxacin","Ceftriaxone, Bactrim",好氧菌 - 革蘭氏陰性桿菌
+"Serratiamarcescens
+(粘質沙雷氏菌)",第3 代cephalosporin,Bactrim,好氧菌 - 革蘭氏陰性桿菌
+Shigella(志賀氏桿菌),"Quinolone, Ciprofloxacin",Ceftriaxone,好氧菌 - 革蘭氏陰性桿菌
+"Stenotrophomonas maltophilia
+(嗜麥芽窄食單胞菌)",Bactrim,"Ceftazidime, Minocin, Quinolone, β-lactamase inhibitor ",好氧菌 - 革蘭氏陰性桿菌
+Bacteroides fragilis(脆弱桿菌),Metronidazole,"Clindamycin, β-lactamase inhibitor combination, Imipenem",厭氧菌
+Clostridia difficile(艱難腸梭菌),Metronidazole,Vancomycin,厭氧菌
+Fusobacterium(梭形桿菌),Penicillin,"Metronidazole, Clindamycin",厭氧菌
+"Actinomyces israelii
+(以色列放線菌)",Penicillin,Tetracycline,厭氧菌
+Nocardia(土壤菌),Bactrim,"Amikacin, Minocin, Imipenem",厭氧菌
+"Chlamydia trachomatis
+(砂眼披衣菌)","Doxycycline, Azithromycin",Erythromycin,厭氧菌
+"Chlamydia pneumoniae
+(肺炎衣原體)",Doxycycline,Erythromycin,厭氧菌
+"Mycoplasma pneumoniae
+(肺炎黴漿菌)","Erythromycin 巨環類,
+Doxycycline","Ampicillin, 第2 或3 代cephalosporin",厭氧菌
+"Treponema pallidum
+(梅毒螺旋菌)",Penicillin,Doxycycline,厭氧菌
+"Borreliaburgdorferi
+(伯氏疏螺旋體)","early- doxycycline, amoxicillin
+late- ceftriaxone+azithromycin",,厭氧菌
