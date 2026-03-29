@@ -23,7 +23,7 @@ elif os.path.exists("bacteria_test.csv"):
 
 if df is not None:
     # 清理空值與換行符號，避免排版跑掉或程式報錯
-    df['菌種'] = df['菌種'].astype(str).str.replace('\n', ' ') # 🌟 這一行能解決大標題斷掉的問題
+    df['菌種'] = df['菌種'].astype(str).replace(r'[\n\r]', ' ', regex=True).str.strip()
     df['首選藥'] = df['首選藥'].fillna('無')
     df['替代藥'] = df['替代藥'].fillna('無')
 
