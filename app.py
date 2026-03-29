@@ -32,13 +32,15 @@ if df is not None:
     else:
         df['分類'] = df['分類'].fillna('無分類資訊')
 
-    mode = st.radio("🔄 請選擇功能：", [
+   # 🌟 移至側邊欄的選單設定
+    st.sidebar.title("⚙️ 設定區")
+    mode = st.sidebar.radio("🔄 請選擇測驗模式：", [
         "📖 學習卡 (Flashcards)", 
         "🎯 選擇題測驗 (Multiple Choice)", 
         "✍️ 單題拼寫 (Typing)",
         "🔍 反向查詢 (給藥物 ➔ 猜細菌)",
         "🏆 全真模擬考 (Mock Exam)",
-        "📊 查看完整題庫 (Data Table)" # 🌟 新增第六個模式
+        "📊 查看完整題庫 (Data Table)"
     ])
     st.divider()
     bacteria_list = df['菌種'].tolist()
@@ -49,12 +51,17 @@ if df is not None:
     unique_alts = df['替代藥'].unique().tolist()
     if '無' in unique_alts: unique_alts.remove('無')
 
-    # 共用函數：產生字數與符號提示
+   # 原本的密碼提示函數
     def generate_hint(text):
         if str(text) == "無" or pd.isna(text):
             return "無"
         return re.sub(r'[a-zA-Z]', '*', str(text))
 
+    # 🌟 新增：寬鬆對答案過濾器 (只保留英文字母和數字，且不分大小寫)
+    def normalize_text(text):
+        if pd.isna(text) or str(text) == "無": 
+            return "無"
+        return re.sub(r'[^a-zA-Z0-9]', '', str(text)).lower()
   # ==========================================
     # 模式一：學習卡 (Flashcards) - 🌟 Quizlet 專業版
     # ==========================================
@@ -192,7 +199,7 @@ if df is not None:
                 else: st.error(f"❌ 替代藥：錯誤 (正確為 **{correct_alt}**)")
 
     # ==========================================
-    # 模式三：單題拼寫測驗 (Typing)
+    # 模式三：單題拼寫 (Typing) - 🌟 升級寬鬆批改系統
     # ==========================================
     elif mode == "✍️ 單題拼寫 (Typing)":
         st.header("✍️ 單題拼寫測驗")
@@ -213,15 +220,25 @@ if df is not None:
         st.info(f"**🧩 格式密碼提示：**\n\n首選藥： `{generate_hint(row['首選藥'])}`\n\n替代藥： `{generate_hint(row['替代藥'])}`")
         
         col1, col2 = st.columns(2)
-        with col1: st.text_input("✍️ 首選藥", key="doc_input")
-        with col2: st.text_input("✍️ 替代藥", key="alt_input")
+        with col1: user_doc = st.text_input("✍️ 首選藥", key="doc_input")
+        with col2: user_alt = st.text_input("✍️ 替代藥", key="alt_input")
             
-        if st.button("👁️ 看解答 / 對答案"): st.session_state.type_show_ans = True
+        if st.button("👁️ 提交答案 / 看解答"): st.session_state.type_show_ans = True
 
         if st.session_state.type_show_ans:
-            st.markdown("### 💡 標準答案：")
-            st.success(f"🏆 **首選藥:** {row['首選藥']}")
-            st.warning(f"🛡️ **替代藥:** {row['替代藥']}")
+            st.markdown("---")
+            st.markdown("### 💡 批改結果：")
+            
+            # 🌟 使用 normalize_text 進行寬鬆比對
+            if normalize_text(user_doc) == normalize_text(row['首選藥']):
+                st.success(f"✅ **首選藥：正確！** (標準寫法: {row['首選藥']})")
+            else:
+                st.error(f"❌ **首選藥：錯誤。** (標準寫法: {row['首選藥']})")
+                
+            if normalize_text(user_alt) == normalize_text(row['替代藥']):
+                st.success(f"✅ **替代藥：正確！** (標準寫法: {row['替代藥']})")
+            else:
+                st.error(f"❌ **替代藥：錯誤。** (標準寫法: {row['替代藥']})")
             
     # ==========================================
     # 模式四：反向查詢 (給藥物 ➔ 猜細菌) - 🌟 升級搜替代藥版
@@ -345,24 +362,46 @@ if df is not None:
                     with col1: st.radio("👉 【首選藥】", st.session_state.mock_options_doc, index=None, key=f"mock_doc_rad_{curr_q}")
                     with col2: st.radio("👉 【替代藥】", st.session_state.mock_options_alt, index=None, key=f"mock_alt_rad_{curr_q}")
 
-                # 提交答案按鈕
-                if not st.session_state.mock_show_ans:
-                    if st.button("👁️ 提交答案 / 看解答"):
-                        st.session_state.mock_show_ans = True
-                        st.rerun()
-
-                # 顯示解答與進入下一題的邏輯
+               # 顯示解答與進入下一題的邏輯
                 if st.session_state.mock_show_ans:
                     st.markdown("---")
-                    st.markdown("### 💡 標準答案：")
-                    st.success(f"🏆 **首選藥:** {correct_doc}")
-                    st.warning(f"🛡️ **替代藥:** {correct_alt}")
+                    st.markdown("### 💡 批改結果：")
+                    
+                    # 🌟 針對拼寫測驗進行寬鬆比對
+                    if mock_type == "✍️ 拼寫測驗":
+                        user_doc = st.session_state.get(f"mock_doc_text_{curr_q}", "")
+                        user_alt = st.session_state.get(f"mock_alt_text_{curr_q}", "")
+                        
+                        if normalize_text(user_doc) == normalize_text(correct_doc):
+                            st.success(f"✅ **首選藥正確！** ({correct_doc})")
+                        else:
+                            st.error(f"❌ **首選藥錯誤。** 標準：{correct_doc}")
+                            
+                        if normalize_text(user_alt) == normalize_text(correct_alt):
+                            st.success(f"✅ **替代藥正確！** ({correct_alt})")
+                        else:
+                            st.error(f"❌ **替代藥錯誤。** 標準：{correct_alt}")
+                            
+                    # 針對選擇題進行比對
+                    else: 
+                        user_doc = st.session_state.get(f"mock_doc_rad_{curr_q}")
+                        user_alt = st.session_state.get(f"mock_alt_rad_{curr_q}")
+                        
+                        if user_doc == correct_doc:
+                            st.success(f"✅ **首選藥正確！** ({correct_doc})")
+                        else:
+                            st.error(f"❌ **首選藥錯誤。** 標準：{correct_doc}")
+                            
+                        if user_alt == correct_alt:
+                            st.success(f"✅ **替代藥正確！** ({correct_alt})")
+                        else:
+                            st.error(f"❌ **替代藥錯誤。** 標準：{correct_alt}")
                     
                     if st.button("➡️ 下一題", type="primary"):
                         st.session_state.mock_index += 1
                         st.session_state.mock_show_ans = False
-                        st.session_state.mock_options_doc = [] # 清空選項，讓下一題重新生成
-                        st.session_state.mock_options_alt = [] # 清空選項，讓下一題重新生成
+                        st.session_state.mock_options_doc = [] 
+                        st.session_state.mock_options_alt = [] 
                         st.rerun()
             else:
                 # 所有題目做完的畫面
