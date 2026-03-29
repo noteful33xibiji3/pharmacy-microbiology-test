@@ -5,7 +5,7 @@ import re
 import os
 
 # 設定網頁標題
-st.set_page_config(page_title="抗生素學習與測驗系統", page_icon="💊")
+st.set_page_config(page_title="期中細菌與抗生素", page_icon="💊")
 
 st.title("🦠 藥理/微免 學習與測驗系統")
 st.markdown("請上傳題庫，並選擇你要進行的學習模式！")
