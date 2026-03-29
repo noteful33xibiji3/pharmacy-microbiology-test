@@ -40,6 +40,7 @@ if df is not None:
         "✍️ 單題拼寫 (Typing)",
         "🔍 反向查詢 (給藥物 ➔ 猜細菌)",
         "🏆 全真模擬考 (Mock Exam)",
+        "🧩 拖牌配對模式 (Matching)",
         "📊 查看完整題庫 (Data Table)"
     ])
     st.divider()
@@ -139,107 +140,205 @@ if df is not None:
                 else:
                     st.toast("🎉 恭喜！卡片已經全部複習完畢！", icon="🎉")
     # ==========================================
-    # 模式二：選擇題 (Multiple Choice)
+    # 模式二：選擇題測驗 (Multiple Choice) - 🌟 完整融合挑戰版
     # ==========================================
     elif mode == "🎯 選擇題測驗 (Multiple Choice)":
         st.header("🎯 選擇題測驗")
-        mc_target = st.radio("🎯 請選擇本次測驗目標：", ["首選藥", "替代藥", "兩者皆考 (綜合測驗)"], horizontal=True)
-        selected_bac = st.selectbox("🔍 請選擇題目 (細菌)：", bacteria_list)
+        
+        # 1. 頂部設定區 (融合版本二的設定)
+        col_set1, col_set2 = st.columns(2)
+        with col_set1:
+            mc_target = st.radio("🎯 測驗目標：", ["首選藥", "替代藥", "兩者皆考"], horizontal=True)
+        with col_set2:
+            mc_flow = st.radio("🔄 題目來源：", ["單題練習", "輪完題庫"], horizontal=True)
 
-        if 'mc_options_doc' not in st.session_state: st.session_state.mc_options_doc = []
-        if 'mc_options_alt' not in st.session_state: st.session_state.mc_options_alt = []
+        # 2. 初始化所有狀態
+        if 'mc_loop_active' not in st.session_state: st.session_state.mc_loop_active = False
+        if 'mc_loop_index' not in st.session_state: st.session_state.mc_loop_index = 0
+        if 'mc_loop_order' not in st.session_state: st.session_state.mc_loop_order = []
+        if 'mc_show_ans' not in st.session_state: st.session_state.mc_show_ans = False
         if 'last_mc_bac' not in st.session_state: st.session_state.last_mc_bac = ""
         if 'last_mc_target' not in st.session_state: st.session_state.last_mc_target = ""
-        if 'mc_show_ans' not in st.session_state: st.session_state.mc_show_ans = False
 
+        # 3. 題目來源邏輯 (選擇單一細菌或循序練習)
+        if mc_flow == "單題練習":
+            st.session_state.mc_loop_active = False
+            selected_bac = st.selectbox("🔍 請選擇題目 (細菌)：", bacteria_list)
+        else:
+            if not st.session_state.mc_loop_active:
+                if st.button("🚀 開始挑戰全題庫", use_container_width=True):
+                    shuffled = bacteria_list.copy()
+                    random.shuffle(shuffled)
+                    st.session_state.mc_loop_order = shuffled
+                    st.session_state.mc_loop_index = 0
+                    st.session_state.mc_loop_active = True
+                    st.rerun()
+                st.stop()
+            
+            total_q = len(st.session_state.mc_loop_order)
+            curr_q = st.session_state.mc_loop_index
+            
+            if curr_q < total_q:
+                st.progress(curr_q / total_q)
+                st.write(f"📝 **進度：第 {curr_q + 1} 題 / 共 {total_q} 題**")
+                selected_bac = st.session_state.mc_loop_order[curr_q]
+            else:
+                st.balloons()
+                st.success("🎉 恭喜！題庫已經全部考完一次！")
+                if st.button("🔄 重新開始挑戰"):
+                    st.session_state.mc_loop_active = False
+                    st.rerun()
+                st.stop()
+
+        # 4. 核心出題與選項生成 (融合版本一的洗牌邏輯)
         row = df[df['菌種'] == selected_bac].iloc[0]
-        correct_doc = row['首選藥']
-        correct_alt = row['替代藥']
+        correct_doc, correct_alt = row['首選藥'], row['替代藥']
 
+        # 若更換題目或更換目標，重新生成選項
         if selected_bac != st.session_state.last_mc_bac or mc_target != st.session_state.last_mc_target:
             st.session_state.last_mc_bac = selected_bac
             st.session_state.last_mc_target = mc_target
             st.session_state.mc_show_ans = False
             
+            # 生成首選藥選項
             other_docs = [d for d in unique_drugs if d != correct_doc]
-            opts_doc = random.sample(other_docs, min(3, len(other_docs))) + [correct_doc]
-            random.shuffle(opts_doc)
-            st.session_state.mc_options_doc = opts_doc
+            st.session_state.mc_options_doc = random.sample(other_docs, min(3, len(other_docs))) + [correct_doc]
+            random.shuffle(st.session_state.mc_options_doc)
             
+            # 生成替代藥選項
             other_alts = [a for a in unique_alts if a != correct_alt]
-            opts_alt = random.sample(other_alts, min(3, len(other_alts))) + [correct_alt]
-            random.shuffle(opts_alt)
-            st.session_state.mc_options_alt = opts_alt
+            st.session_state.mc_options_alt = random.sample(other_alts, min(3, len(other_alts))) + [correct_alt]
+            random.shuffle(st.session_state.mc_options_alt)
 
+        # 5. 顯示題目 UI
         st.subheader(f"請問 **{selected_bac}** 的用藥是？")
         st.caption(f"💡 分類提示：{row['分類']}")
         
         user_choice_doc, user_choice_alt = None, None
-        if mc_target in ["首選藥", "兩者皆考 (綜合測驗)"]:
-            user_choice_doc = st.radio("👉 請選擇【首選藥】：", st.session_state.mc_options_doc, index=None, key="rad_doc")
-        if mc_target in ["替代藥", "兩者皆考 (綜合測驗)"]:
-            user_choice_alt = st.radio("👉 請選擇【替代藥】：", st.session_state.mc_options_alt, index=None, key="rad_alt")
+        if mc_target in ["首選藥", "兩者皆考"]:
+            user_choice_doc = st.radio("👉 【首選藥】", st.session_state.mc_options_doc, index=None, key=f"mc_doc_{selected_bac}")
+        if mc_target in ["替代藥", "兩者皆考"]:
+            user_choice_alt = st.radio("👉 【替代藥】", st.session_state.mc_options_alt, index=None, key=f"mc_alt_{selected_bac}")
 
-        if st.button("送出答案"): st.session_state.mc_show_ans = True
-
-        if st.session_state.mc_show_ans:
+        # 6. 提交按鈕與回饋 (融合版本一的詳細訊息)
+        if not st.session_state.mc_show_ans:
+            if st.button("👁️ 提交答案"):
+                st.session_state.mc_show_ans = True
+                st.rerun()
+        else:
             st.markdown("---")
             if mc_target == "首選藥":
                 if user_choice_doc == correct_doc: st.success("🎉 答對了！首選藥精準命中！")
                 else: st.error(f"❌ 答錯囉。首選藥應該是：**{correct_doc}**")
                 st.info(f"💡 順帶一提，這隻菌的替代藥是：{correct_alt}")
+                
             elif mc_target == "替代藥":
                 if user_choice_alt == correct_alt: st.success("🎉 答對了！替代藥精準命中！")
                 else: st.error(f"❌ 答錯囉。替代藥應該是：**{correct_alt}**")
                 st.info(f"💡 順帶一提，這隻菌的首選藥是：{correct_doc}")
-            elif mc_target == "兩者皆考 (綜合測驗)":
-                if user_choice_doc == correct_doc: st.success("🎉 首選藥：正確！")
+                
+            elif mc_target == "兩者皆考":
+                if user_choice_doc == correct_doc: st.success(f"🎉 首選藥：正確！ ({correct_doc})")
                 else: st.error(f"❌ 首選藥：錯誤 (正確為 **{correct_doc}**)")
-                if user_choice_alt == correct_alt: st.success("🎉 替代藥：正確！")
+                    
+                if user_choice_alt == correct_alt: st.success(f"🎉 替代藥：正確！ ({correct_alt})")
                 else: st.error(f"❌ 替代藥：錯誤 (正確為 **{correct_alt}**)")
-
+            
+            # 輪播模式下顯示下一題按鈕
+            if mc_flow == "輪完題庫":
+                if st.button("➡️ 下一題", type="primary", use_container_width=True):
+                    st.session_state.mc_loop_index += 1
+                    st.session_state.mc_show_ans = False
+                    st.rerun()
     # ==========================================
-    # 模式三：單題拼寫 (Typing) - 🌟 升級寬鬆批改系統
+    # 模式三：單題拼寫 (Typing) - 🌟 寬鬆批改 + 連續挑戰融合版
     # ==========================================
     elif mode == "✍️ 單題拼寫 (Typing)":
-        st.header("✍️ 單題拼寫測驗")
-        selected_bac = st.selectbox("🔍 請選擇題目 (細菌)：", bacteria_list)
+        st.header("✍️ 拼寫測驗")
+        
+        # 1. 頂部設定區
+        type_flow = st.radio("🔄 題目來源：", ["單題練習", "輪完題庫"], horizontal=True)
 
+        # 2. 初始化輪播與批改狀態
+        if 'type_loop_active' not in st.session_state: st.session_state.type_loop_active = False
+        if 'type_loop_index' not in st.session_state: st.session_state.type_loop_index = 0
+        if 'type_loop_order' not in st.session_state: st.session_state.type_loop_order = []
         if 'type_show_ans' not in st.session_state: st.session_state.type_show_ans = False
-        if 'last_type_bac' not in st.session_state: st.session_state.last_type_bac = selected_bac
+        if 'last_type_bac' not in st.session_state: st.session_state.last_type_bac = ""
+
+        # 3. 題目來源邏輯
+        if type_flow == "單題練習":
+            st.session_state.type_loop_active = False
+            selected_bac = st.selectbox("🔍 請選擇題目 (細菌)：", bacteria_list)
+        else:
+            if not st.session_state.type_loop_active:
+                if st.button("🚀 開始挑戰全題庫", use_container_width=True):
+                    shuffled = bacteria_list.copy()
+                    random.shuffle(shuffled)
+                    st.session_state.type_loop_order = shuffled
+                    st.session_state.type_loop_index = 0
+                    st.session_state.type_loop_active = True
+                    st.rerun()
+                st.stop()
             
+            total_q = len(st.session_state.type_loop_order)
+            curr_q = st.session_state.type_loop_index
+            
+            if curr_q < total_q:
+                st.progress(curr_q / total_q)
+                st.write(f"📝 **進度：第 {curr_q + 1} 題 / 共 {total_q} 題**")
+                selected_bac = st.session_state.type_loop_order[curr_q]
+            else:
+                st.balloons()
+                st.success("🎉 恭喜！拼寫題庫已經全部完成！")
+                if st.button("🔄 重新開始挑戰"):
+                    st.session_state.type_loop_active = False
+                    st.rerun()
+                st.stop()
+
+        # 4. 偵測題目變換時重置解答狀態
         if selected_bac != st.session_state.last_type_bac:
             st.session_state.type_show_ans = False
             st.session_state.last_type_bac = selected_bac
 
         row = df[df['菌種'] == selected_bac].iloc[0]
 
+        # 5. 顯示題目與提示
         st.subheader(f"請拼出 **{selected_bac}** 的用藥")
         st.caption(f"💡 分類提示：{row['分類']}")
-        
         st.info(f"**🧩 格式密碼提示：**\n\n首選藥： `{generate_hint(row['首選藥'])}`\n\n替代藥： `{generate_hint(row['替代藥'])}`")
         
+        # 使用帶有細菌名稱的 key，確保換題時輸入框會清空
         col1, col2 = st.columns(2)
-        with col1: user_doc = st.text_input("✍️ 首選藥", key="doc_input")
-        with col2: user_alt = st.text_input("✍️ 替代藥", key="alt_input")
+        with col1: user_doc = st.text_input("✍️ 首選藥", key=f"type_doc_input_{selected_bac}")
+        with col2: user_alt = st.text_input("✍️ 替代藥", key=f"type_alt_input_{selected_bac}")
             
-        if st.button("👁️ 提交答案 / 看解答"): st.session_state.type_show_ans = True
-
-        if st.session_state.type_show_ans:
+        # 6. 提交按鈕與融合批改邏輯
+        if not st.session_state.type_show_ans:
+            if st.button("👁️ 提交答案 / 看解答"):
+                st.session_state.type_show_ans = True
+                st.rerun()
+        else:
             st.markdown("---")
-            st.markdown("### 💡 批改結果：")
+            st.markdown("### 💡 批改結果 (已自動忽略符號與大小寫)：")
             
-            # 🌟 使用 normalize_text 進行寬鬆比對
+            # 🌟 融合：使用 normalize_text 寬鬆比對 + 詳細 Success/Error 訊息
             if normalize_text(user_doc) == normalize_text(row['首選藥']):
-                st.success(f"✅ **首選藥：正確！** (標準寫法: {row['首選藥']})")
+                st.success(f"✅ **首選藥：正確！** ({row['首選藥']})")
             else:
-                st.error(f"❌ **首選藥：錯誤。** (標準寫法: {row['首選藥']})")
+                st.error(f"❌ **首選藥：錯誤。** 正確應該是: {row['首選藥']}")
                 
             if normalize_text(user_alt) == normalize_text(row['替代藥']):
-                st.success(f"✅ **替代藥：正確！** (標準寫法: {row['替代藥']})")
+                st.success(f"✅ **替代藥：正確！** ({row['替代藥']})")
             else:
-                st.error(f"❌ **替代藥：錯誤。** (標準寫法: {row['替代藥']})")
+                st.error(f"❌ **替代藥：錯誤。** 正確應該是: {row['替代藥']}")
             
+            # 輪播模式下顯示下一題按鈕
+            if type_flow == "輪完題庫":
+                if st.button("➡️ 下一題", type="primary", use_container_width=True):
+                    st.session_state.type_loop_index += 1
+                    st.session_state.type_show_ans = False
+                    st.rerun()
     # ==========================================
     # 模式四：反向查詢 (給藥物 ➔ 猜細菌) - 🌟 升級搜替代藥版
     # ==========================================
@@ -412,6 +511,78 @@ if df is not None:
                 if st.button("🔄 再挑戰一次"):
                     st.session_state.mock_active = False
                     st.rerun()
+
+    # ==========================================
+    # 模式六：拖牌配對模式 (Matching) - 🌟 模擬卡片填入表格
+    # ==========================================
+    elif mode == "🧩 拖牌配對模式 (Matching)":
+        st.header("🧩 拖牌配對模式")
+        st.caption("挑戰把藥物「填」入正確的格子！這對建立分類記憶非常有幫助。")
+
+        # 1. 讓使用者先選擇細菌類別
+        all_categories = sorted(df['分類'].unique().tolist())
+        target_cat = st.selectbox("🎯 請選擇要挑戰的細菌類別：", all_categories)
+
+        # 2. 準備該類別的資料與「藥物銀行」(Word Bank)
+        quiz_df = df[df['分類'] == target_cat].copy()
+        
+        # 拆解出該類別會用到的所有單一藥名作為選項
+        raw_words = quiz_df['首選藥'].tolist() + quiz_df['替代藥'].tolist()
+        word_bank = []
+        for w in raw_words:
+            # 使用 re.split 拆開複合藥名，去掉重複並排除"無"
+            word_bank.extend([x.strip() for x in re.split(r'[,+/]', str(w)) if x.strip() != "無"])
+        word_bank = sorted(list(set(word_bank)))
+
+        st.info(f"🏷️ **可用藥物清單 (Word Bank)：**\n\n{', '.join(word_bank)}")
+
+        # 3. 初始化表格狀態 (避免點擊時表格被刷掉)
+        if 'match_data' not in st.session_state or st.session_state.get('last_match_cat') != target_cat:
+            st.session_state.last_match_cat = target_cat
+            st.session_state.match_data = pd.DataFrame({
+                "菌種": quiz_df['菌種'].tolist(),
+                "🏆 首選藥 (點擊選擇)": [None] * len(quiz_df),
+                "🛡️ 替代藥 (點擊選擇)": [None] * len(quiz_df)
+            })
+
+        # 4. 顯示互動表格 (st.data_editor)
+        # 這會產生一個像 Excel 的界面，點擊格子會跳出選單
+        edited_df = st.data_editor(
+            st.session_state.match_data,
+            column_config={
+                "菌種": st.column_config.TextColumn("🦠 菌種名稱", disabled=True),
+                "🏆 首選藥 (點擊選擇)": st.column_config.SelectboxColumn("🏆 首選藥", options=word_bank),
+                "🛡️ 替代藥 (點擊選擇)": st.column_config.SelectboxColumn("🛡️ 替代藥", options=word_bank)
+            },
+            hide_index=True,
+            use_container_width=True,
+            key="matching_table_editor"
+        )
+
+        # 5. 對答案邏輯
+        if st.button("🚀 提交表格並對答案", type="primary", use_container_width=True):
+            st.markdown("---")
+            st.subheader("📊 批改結果：")
+            
+            for i, row in quiz_df.reset_index(drop=True).iterrows():
+                user_doc = edited_df.iloc[i]["🏆 首選藥 (點擊選擇)"]
+                user_alt = edited_df.iloc[i]["🛡️ 替代藥 (點擊選擇)"]
+                
+                correct_doc = row['首選藥']
+                correct_alt = row['替代藥']
+                
+                with st.expander(f"菌種：{row['菌種']}", expanded=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if normalize_text(user_doc) == normalize_text(correct_doc):
+                            st.success(f"首選藥：✅ ({correct_doc})")
+                        else:
+                            st.error(f"首選藥：❌ (正確：{correct_doc})")
+                    with col2:
+                        if normalize_text(user_alt) == normalize_text(correct_alt):
+                            st.success(f"替代藥：✅ ({correct_alt})")
+                        else:
+                            st.error(f"替代藥：❌ (正確：{correct_alt})")
     # ==========================================
     # 模式六：查看完整題庫 (Data Table)
     # ==========================================
